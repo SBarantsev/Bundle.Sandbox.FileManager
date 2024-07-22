@@ -1,11 +1,13 @@
-//
+////
 //  SceneDelegate.swift
 //  Bundle.Sandbox.FileManager.HomeWork
 //
 //  Created by Sergey on 19.04.2024.
 //
 
+
 import UIKit
+
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -14,15 +16,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
 
-        guard let scene = (scene as? UIWindowScene) else { return }
-        window = UIWindow(windowScene: scene)
+        guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        let fileManagerService = FileManagerService()
-        let controller = ViewController(fileService: fileManagerService)
-        let navigationController = UINavigationController(rootViewController: controller)
-        window?.rootViewController = navigationController
-        window?.makeKeyAndVisible()
-        
+        let window = UIWindow(windowScene: windowScene)
+
+        let viewController = LoginViewController()
+        window.rootViewController = UINavigationController(rootViewController: viewController)
+        window.makeKeyAndVisible()
+        self.window = window
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -53,6 +54,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // to restore the scene back to its current state.
     }
 
-
+    func changeRootViewController(_ vc: UIViewController) {
+        guard let window = self.window else {
+            return
+        }
+        window.rootViewController = vc
+    }
 }
-

@@ -6,98 +6,97 @@
 //
 
 import Foundation
-import UIKit
 
 protocol FileManagerServiceProtocol {
-    
-    func contentsOfDirectory(_ index: Int) -> Bool
+
     func createDirectory(name: String)
-    func createFile(name: String, content: UIImage)
+    func createFile(name: String, content: Data)
     func removeContent(at index: Int)
+    func isDirectoryAtIndex(_ index: Int) -> Bool
+    func getPath(at index: Int) -> String
 }
 
-final class FileManagerService: FileManagerServiceProtocol {
-    
-    private let pathForFolder: String
-    
-    var items: [String] {
-        (try? FileManager.default.contentsOfDirectory(atPath: pathForFolder)) ?? []
+class FilemanagerService: FileManagerServiceProtocol {
+
+    var items: [String] = []
+    let pathForFolder: String
+
+    init() {
+        self.pathForFolder = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
     }
-    
+
     init(pathForFolder: String) {
         self.pathForFolder = pathForFolder
     }
-    
-    init() {
-        pathForFolder = NSSearchPathForDirectoriesInDomains(
-            .documentDirectory,
-            .userDomainMask,
-            true
-        )[0]
-    }
-    
-    func getContent() -> [Content] {
-        let fileManager = FileManager.default
-        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        
-        var contentArray = [Content]()
-        
-        do {
-            let contents = try fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil)
-            
-            for itemURL in contents {
-                var type: ContetntType = .file
-                var isDirectory: ObjCBool = false
-                if fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDirectory) {
-                    if isDirectory.boolValue {
-                        type = .folder
-                    }
-                }
-                let itemName = itemURL.lastPathComponent
-                let contentItem = Content(name: itemName, type: type)
-                contentArray.append(contentItem)
-            }
-        } catch {
-            print("Error: \(error)")
-        }
-        return contentArray
-    }
-    
+
     func createDirectory(name: String) {
-        try? FileManager.default.createDirectory(atPath: pathForFolder + "/" + name, withIntermediateDirectories: true)
-    }
-    
-    func createFile(name: String, content: UIImage) {
-        let path = URL(filePath: pathForFolder + "/" + name)
+        let pathToSave = pathForFolder + "/" + name
         do {
-            if let imageData = content.pngData() {
-                try imageData.write(to: path)
-            }
+            try FileManager.default.createDirectory(atPath: pathToSave, withIntermediateDirectories: true)
         } catch {
             print(error.localizedDescription)
         }
     }
-    
+
+    func createFile(name: String, content: Data) {
+        let pathToSave = URL(filePath: pathForFolder + "/" + name)
+        do {
+            try content.write(to: pathToSave)
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+
     func removeContent(at index: Int) {
         let path = pathForFolder + "/" + items[index]
-        try? FileManager.default.removeItem(atPath: path)
+        do {
+            try FileManager.default.removeItem(atPath: path)
+        } catch {
+            print(error.localizedDescription)
+        }
     }
-    
+
+    func fetchData() {
+        do {
+            items = try FileManager.default.contentsOfDirectory(atPath: pathForFolder)
+        } catch {
+            items = []
+        }
+    }
+
+    func sort(by: Sorting) {
+        switch by {
+        case .notSorted:
+            break
+        case .sortedUpper:
+            do {
+                items = try FileManager.default.contentsOfDirectory(atPath: pathForFolder).sorted(by: <)
+            } catch {
+                items = []
+            }
+        case .soertedLower:
+            do {
+                items = try FileManager.default.contentsOfDirectory(atPath: pathForFolder).sorted(by: >)
+            } catch {
+                items = []
+            }
+        }
+    }
+
+    func sort() {
+        items = items.sorted()
+        print(items)
+    }
+
     func getPath(at index: Int) -> String {
-        pathForFolder + "/" + items[index]
+        return pathForFolder + "/" + items[index]
     }
-    
-    func contentsOfDirectory(_ index: Int) -> Bool {
-        
+
+    func isDirectoryAtIndex(_ index: Int) -> Bool {
         let item = items[index]
         let path = pathForFolder + "/" + item
-        
         var objcBool: ObjCBool = false
-        
         FileManager.default.fileExists(atPath: path, isDirectory: &objcBool)
-        
         return objcBool.boolValue
     }
 }
-
-
